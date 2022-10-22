@@ -96,9 +96,9 @@ function info {
 	check_mount $name $path
 	local res=$?
 	if [[ $res == 1 ]]; then  
-		size=`du -s "$path" | awk '{print $1}'`
+		size=`du -s "$tmp_dir/$name/" | awk '{print $1}'`
 		size_data=`du -s "$path-data" | awk '{print $1}'`
-		echo "$name mem usage: $(( ($size_data-$size)/1024 ))mb"
+		echo "$name mem usage: $(( $size/1024 ))mb; size on disk: $(( $size_data/1024 ))mb"
 	fi 
 }
 
