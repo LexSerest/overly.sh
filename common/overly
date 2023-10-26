@@ -1,0 +1,124 @@
+#!/bin/bash
+
+source /usr/share/overly/config.conf
+
+PROFILE=${PROFILE:-$HOME/.config/google-chrome}
+CACHE=${CACHE:-$HOME/.cache/google-chrome}
+
+PROFILE_PATH="brower-profile"
+CACHE_PATH="brower-cache"
+
+tmp_dir="/tmp/overlay-cache"
+
+function echo_info {
+  original_path="$2/"
+  data_path="$2-data/"
+  tmp_path="$tmp_dir/$1/"
+  work_path="$tmp_dir/$1-work/"
+
+  echo "name: $1"
+  echo "endpoint: $original_path"
+  echo "data: $data_path"
+  echo "tmp: $tmp_path"
+  echo "work: $work_path"
+}
+
+function omount {
+  # 1 arg - name
+  # 2 arg - original path
+  name=$1
+  path=$2
+  original_path="$path/"
+  data_path="$path-data/"
+  tmp_path="$tmp_dir/$name/"
+  work_path="$tmp_dir/$name-work/"
+  is_mount=$(findmnt $original_path)
+
+  if [[ -z $is_mount ]]; then
+    echo_info $name $path
+    echo "========================="
+    if [[ ! -d $data_path ]]; then
+      echo "chrome cache move to $data_path"
+      mv -vn $original_path $data_path
+      #mkdir -p $data_path
+    fi
+
+    echo "Mount $name $path..."
+    rm -rf $original_path
+    rm -rf $tmp_path
+    sudo rm -rf $work_path
+    mkdir -p $original_path
+    mkdir -p $tmp_path
+    mkdir -p $work_path
+    sudo mount -o nosuid,nodev -t overlay overlay -o lowerdir=$data_path,upperdir=$tmp_path,workdir=$work_path $original_path
+    echo "$1 mount success"
+  else
+    echo "Already mounted $name $path"
+  fi
+
+  echo ""
+}
+
+function check_mount {
+  #echo "Check - $2"
+  if [[ -z $(findmnt $2) ]]; then
+    echo "$1 - not mount"
+    return
+  else
+    return 1
+  fi
+}
+
+function oumount {
+  name=$1
+  path=$2
+  check_mount $name $path
+  local res=$?
+  if [[ $res == 1 ]]; then
+    sync $1 $2
+    echo "umount $path"
+    sudo umount $path
+  fi
+}
+
+function sync {
+  name=$1
+  path=$2
+  check_mount $name $path
+  local res=$?
+  if [[ $res == 1 ]]; then
+    echo
+    echo "sync $path"
+    rsync -aXh --info=progress2 --delete-after --inplace --no-whole-file "$path/" "$path-data/"
+  fi
+}
+
+function info {
+  name=$1
+  path=$2
+  check_mount $name $path
+  local res=$?
+  if [[ $res == 1 ]]; then
+    size=$(du -s "$tmp_dir/$name/" | awk '{print $1}')
+    size_data=$(du -s "$path-data" | awk '{print $1}')
+    echo "$name mem usage: $(($size / 1024))mb; size on disk: $(($size_data / 1024))mb"
+    echo ""
+    echo_info $name $path
+  fi
+  echo "================="
+  echo ""
+}
+
+function cmd {
+  $1 $PROFILE_PATH $PROFILE
+  $1 $CACHE_PATH $CACHE
+}
+
+[[ $1 == "mount" ]] && cmd omount
+[[ $1 == "umount" ]] && cmd oumount
+[[ $1 == "sync" ]] && cmd sync
+[[ $1 == "info" ]] && cmd info
+
+if [[ -z $1 ]]; then
+  echo "usage: overly [ mount | umount | sync | info ]"
+fi

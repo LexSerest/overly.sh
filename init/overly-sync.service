@@ -1,0 +1,12 @@
+[Unit]
+Description=Overly timed sync
+After=overly.service
+Wants=overly.timer
+BindsTo=overly.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/overly sync
+
+[Install]
+WantedBy=default.target

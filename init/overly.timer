@@ -1,0 +1,7 @@
+[Unit]
+Description=Timer for Overly - 1Hour
+BindsTo=overly.service
+
+[Timer]
+OnUnitActiveSec=1h
+Unit=overly-sync.service

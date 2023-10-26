@@ -1,0 +1,14 @@
+[Unit]
+Description=Ovelry - profile overlayfs
+Wants=ovelry-sync.service
+RequiresMountsFor=/home/
+After=winbindd.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/bin/overly mount
+ExecStop=/usr/bin/overly umount
+
+[Install]
+WantedBy=default.target
