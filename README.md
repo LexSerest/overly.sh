@@ -19,8 +19,9 @@ make install
 ### Config
 
 To change folders, use `/usr/share/overly/config.conf`.
-Uses folders by default:
-Profile: `$HOME/.config/google-chrome`.
+
+Uses folders by default:\
+Profile: `$HOME/.config/google-chrome`.\
 Cache: `$HOME/.cache/google-chrome`.
 
 ### Run
@@ -30,7 +31,7 @@ systemctl --user enable overly
 systemctl --user start overly
 
 # for automatic synchronization once per hour
-systemctl --user enable overly.timer
+systemctl --user enable overly-sync
 ```
 
 ### Usage
